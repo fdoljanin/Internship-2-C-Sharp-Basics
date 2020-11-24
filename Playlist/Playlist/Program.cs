@@ -23,10 +23,10 @@ namespace Playlist
             mainMenu();
         }
 
-
-        static void cls()
+        //functions that are used in other options
+        static void cls() 
         {
-            bool clears=true; //if not wanted, set false
+            bool clears = true; //if not wanted, set false
             if (clears) Console.Clear();
         }
 
@@ -35,7 +35,7 @@ namespace Playlist
             RED,YELLOW,GREEN
         }
 
-        static void colorText(string msg, color txtColor)
+        static void colorText(string msg, color txtColor) //outputs colored msg using enum
         {
             if (txtColor == color.RED) Console.ForegroundColor = ConsoleColor.Red;
             if (txtColor == color.YELLOW) Console.ForegroundColor = ConsoleColor.Yellow;
@@ -44,7 +44,7 @@ namespace Playlist
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        static bool confirmMsg(string msg)
+        static bool confirmMsg(string msg) //confirms action with message displayed
         {
             colorText(msg+" (da/ne)",color.RED);
             while (true)
@@ -61,7 +61,7 @@ namespace Playlist
            
         }
 
-        static int validNum(string msg)
+        static int validNum(string msg) //returns index if input is valid, 0 for menu
         {
             Console.WriteLine(msg);
             var input = Console.ReadLine().Trim();
@@ -89,7 +89,7 @@ namespace Playlist
             return numInput;
         }
 
-        static (int, string) validName(string msg)
+        static (int Key, string Value) validName(string msg) //returns tuple w index and name of input song, -1 if not found
         {
             Console.WriteLine(msg);
             var input = Console.ReadLine().Trim();
@@ -99,14 +99,14 @@ namespace Playlist
                 mainMenu();
                 return (0, input);
             }
-            foreach (KeyValuePair<int, string> song in songs) if (song.Value.ToLower() == input)
+            foreach (var song in songs) if (song.Value.ToLower() == input.ToLower())
                 {
                     return (song.Key, input);
                 }
             return (-1, input);
         }
 
-        static void mainMenu()
+        static void mainMenu() //menu
         {
             string options = @"Odaberite akciju:
 1 - Ispis cijele liste
@@ -141,7 +141,7 @@ namespace Playlist
                     optionCall[choiceInt-1]();
                 }  
             }
-            catch
+            catch //if int convert fails or index out of range
             {
                 cls();
                 colorText("Unos nije prepoznat!\n ", color.YELLOW);
@@ -150,45 +150,47 @@ namespace Playlist
 
         }
         
-        static void songList()
+        //main menu options
+        static void songList() //list of all songs
         {
             Console.WriteLine("Lista Vaših pjesama: \n");
+            if (songs.Count == 0) colorText("Playlista ne sadrži ni jednu pjesmu!", color.YELLOW);
             for(int i=0;i<songs.Count;++i)
             {
                 Console.WriteLine(i+1 + ". - " + songs[i+1]);
             }
-            Console.WriteLine("\n Pritisnite enter za povratak na izbornik.");
+            Console.WriteLine("\nPritisnite enter za povratak na izbornik.");
             Console.ReadLine();
             cls();
             mainMenu();
         }
         
-        static void songFindName()
+        static void songFindName() //find name by index
         {
-            var numInput = validNum("Upišite redni broj pjesme:");
+            var numInput = validNum("Upišite redni broj pjesme ili enter za povratak na izbornik:"); //validate input index
             if (numInput == 0) return;
             Console.WriteLine("Naziv pjesme: " + songs[numInput] + "\n");
             songFindName();
         }
 
-        static void songFindIndex()
+        static void songFindIndex() //find index by name
         {
             var index = validName("Unesite ime pjesme za pretragu ili enter za povratak na izbornik:");
-            if (index.Item1 == 0) return;
-            else if (index.Item1 == -1) Console.WriteLine("Pjesma nije pronađena. \n");
-            else Console.WriteLine("Redni broj pjesme je " + index.Item1 + ".\n");
+            if (index.Key == 0) return;
+            else if (index.Key == -1) Console.WriteLine("Pjesma nije pronađena. \n");
+            else Console.WriteLine("Redni broj pjesme je " + index.Key + ".\n");
             songFindIndex();
         }
         
-        static void songAdd()
+        static void songAdd() //add a song
         {
             var name = validName("Unesite ime pjesme ili enter za povratak za izbornik:");
-            if (name.Item1 == 0) return;
-            if (name.Item1 != -1) colorText("Pjesma već postoji! \n", color.YELLOW);
+            if (name.Key == 0) return;
+            if (name.Key != -1) colorText("Pjesma već postoji! \n", color.YELLOW); //should not be found 
             else
             {
-                if(confirmMsg("Želite li dodati pjesmu " + name.Item2 + " ?")){
-                    songs.Add(songs.Count + 1, name.Item2);
+                if(confirmMsg("Želite li dodati pjesmu " + name.Value + " ?")){
+                    songs.Add(songs.Count + 1, name.Value);
                     colorText("Pjesma dodana!\n", color.GREEN);
                 }
             }
@@ -196,7 +198,7 @@ namespace Playlist
             songAdd();
         }
 
-        static void songIndexRemove()
+        static void songIndexRemove() //remove song by index
         {
             var delIndex = validNum("Upišite redni broj pjesme koju želite obrisati ili enter za izbornik:");
             if (delIndex == 0) return;
@@ -204,7 +206,7 @@ namespace Playlist
             {
                 songs.Remove(delIndex);
                 for (int i = delIndex + 1; i < songs.Count + 2; ++i)
-                { //since we want dict with actual index, O(len-input) with deletion is needed
+                { //since we want dict with actual index, O(len-delIndex) is needed
                     songs.Add(i - 1, songs[i]);
                     songs.Remove(i);
                 }
@@ -213,18 +215,18 @@ namespace Playlist
             songIndexRemove();
         }
         
-        static void songNameRemove()
+        static void songNameRemove() //remove song by name
         {
             var name = validName("Unesite ime pjesme koju želite obrisati ili enter za povratak na izbornik:");
-            if (name.Item1 == 0) return;
-            if (name.Item1 == -1) colorText("Pjesma ne postoji!\n", color.YELLOW);
+            if (name.Key == 0) return;
+            if (name.Key == -1) colorText("Pjesma ne postoji!\n", color.YELLOW);
             else
             {
-                if (confirmMsg("Želite li uistinu obrisati pjesmu " + songs[name.Item1] + "?"))
+                if (confirmMsg("Želite li uistinu obrisati pjesmu " + songs[name.Key] + "?"))
                 {
-                    songs.Remove(name.Item1);
-                    for (int i = name.Item1 + 1; i < songs.Count + 2; ++i)
-                    {//since we want dict with actual index, O(len-input) with deletion is needed
+                    songs.Remove(name.Key);
+                    for (int i = name.Key + 1; i < songs.Count + 2; ++i)
+                    {
                         songs.Add(i - 1, songs[i]);
                         songs.Remove(i);
                     }
@@ -234,7 +236,7 @@ namespace Playlist
             songNameRemove();
         }
 
-        static void listDelete()
+        static void listDelete() //delete playlist
         {
             if(confirmMsg("Jeste li sigurni da želite obrisati sve pjesme?"))
             {
@@ -244,49 +246,49 @@ namespace Playlist
             mainMenu();
         }
 
-        static void songRename()
+        static void songRename() //rename song by name
         {
             var name = validName("Unesite ime pjesme koju želite obrisati preimenovati ili pritisnite enter za povratak:");
-            if (name.Item1 == 0) return;
-            else if (name.Item1 == -1) colorText("Pjesma ne postoji! \n", color.YELLOW);
+            if (name.Key == 0) return;
+            else if (name.Key == -1) colorText("Pjesma ne postoji! \n", color.YELLOW);
             else
             {
                 var newName = validName("Unesite novo ime pjesme ili enter za povratak:");
-                if (newName.Item1 == 0) return;
-                if (newName.Item1 != -1) colorText("Pjesma s tim imenom već postoji!\n", color.YELLOW);
+                if (newName.Key == 0) return;
+                if (newName.Key != -1) colorText("Pjesma s tim imenom već postoji!\n", color.YELLOW);
                 else if (confirmMsg("Želite li sigurno preimenovati pjesmu?"))
                 {
                     colorText("Pjesma preimenovana.\n",color.GREEN);
-                    songs[name.Item1] = newName.Item2;
+                    songs[name.Key] = newName.Value;
                 }
             }
             songRename();
         }
         
-        static void songReindex()
+        static void songReindex() //reindex song by index
         {
             var oldIndex = validNum("Unesite stari redni broj ili enter za povratak:");
             if (oldIndex == 0) return;
-            var newIndex = validNum("Unesite novi redni ili enter za povratak:");
+            var newIndex = validNum("Unesite novi redni broj ili enter za povratak:");
             if (newIndex == 0) return;
             if (confirmMsg("Želite li uistinu zamijeniti redni broj?"))
             {
                 colorText("Index zamijenjen. \n",color.GREEN);
-                var replaced = (newIndex, songs[oldIndex]);
+                var replaced = (Key: newIndex, Value: songs[oldIndex]);
                 songs.Remove(oldIndex);
                 var inc = 1;
-                if (oldIndex > newIndex) inc = -1;
-                for (int i = oldIndex+inc; i*inc <= newIndex*inc; i+=inc)
+                if (oldIndex > newIndex) inc = -1; //if index goes down, increment is negative
+                for (int i = oldIndex+inc; i*inc <= newIndex*inc; i+=inc) //change every song index between old and new
                 {
                     songs.Add(i-inc, songs[i]);
                     songs.Remove(i);
                 }
-                songs.Add(replaced.Item1, replaced.Item2);
+                songs.Add(replaced.Key, replaced.Value);
             }
             songReindex();
         }
 
-        static void songReshuffle()
+        static void songReshuffle() //randomize list
         {
             if (confirmMsg("Želite li pomiješati pjesme?"))
             {
@@ -294,7 +296,7 @@ namespace Playlist
                 var copyDict = new Dictionary<int, string>();
                 var nesto = songs;
                 var oldIndex = new List<int>();
-                var newIndex = new List<int>();
+                var newIndex = new List<int>(); //list with new song index
                 for (int i = 0; i < songs.Count; ++i) oldIndex.Add(i);
                 while (oldIndex.Count > 0)
                 {
